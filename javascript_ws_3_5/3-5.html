@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form action="#">
+        <input class="inputdata" type="text">
+        <input type="submit" value="Add">
+    </form>
+    <ul></ul>
+    <script>
+        const formTag = document.querySelector("form")
+        
+        const addTodo = function(event){
+            const inputTag = document.querySelector('.inputdata')
+            const data = inputTag.value
+            const liTag = document.createElement('li')
+            const ulTag = document.querySelector('ul')
+            if (inputTag.value.trim().length == 0) {
+                alert('값을 입력하시오')
+            }
+            else {
+                liTag.innerText = data
+                ulTag.appendChild(liTag)
+                inputTag.value = null
+            }
+        }
+        formTag.addEventListener('submit', addTodo)
+    </script>
+</body>
+</html>
