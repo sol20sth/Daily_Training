@@ -23,9 +23,13 @@
         txt : ''
     },
       methods: {
-        inputText() {
-            window.open(`https://www.16personalities.com/ko/%EC%84%B1%EA%B2%A9%EC%9C%A0%ED%98%95-${this.txt}`) 
-        }
+          inputText() {
+            if (this.allTypes.includes(this.txt)){
+              window.open(`https://www.16personalities.com/ko/%EC%84%B1%EA%B2%A9%EC%9C%A0%ED%98%95-${this.txt}`) 
+            } else {
+              this.txt = ''
+            }
+          }
       }
     })
   </script>
