@@ -5,10 +5,17 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <style>
+      .completed {
+          text-decoration: line-through;
+          color: red;
+      }
+  </style>
   </head>
   <body>
     <div id="app">
       <h1>Todo List</h1>
+<<<<<<< HEAD
       <input type="text" @input="onInputChange" />
       <button @click="addList">+</button>
       <h3>{{ message }}</h3>
@@ -16,21 +23,56 @@
         <li v-for=""></li>
       </ul>
       <button>완료 목록 삭제</button>
+=======
+      <input type="text" v-model="content" @keyup.enter="addTodo"> <!--@keyup.enter : 엔터키를 누르면-->
+      <button @click="addTodo">+</button>
+      <ul>
+          <li v-for="todo in getTodoList"><input type="checkbox" v-model="todo.completed"><span :class="{completed : todo.completed}">{{ todo.content }}</span></li>
+      </ul>
+      <button @click="deleteCompleted">완료된 할 일 지우기</button>
+>>>>>>> 999ce9b481547788081b7a06af416f82b9bab245
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
       const app = new Vue({
         el: "#app",
         data: {
-          message: "",
+          content: "",
+          todo_list: []
         },
         methods: {
+<<<<<<< HEAD
           onInputChange: function (event) {
             this.message = event.target.value;
           },
           
+=======
+          addTodo() {
+            if (this.content.trim()){
+                this.todo_list.push({'content': this.content, "completed": false})
+                this.content = ''
+              } else{
+                  alert('공백입니다.')
+              }
+              // updateStorage(this.todo_list)
+              
+
+          },
+          deleteCompleted() {
+              this.todo_list = this.todo_list.filter((todo) => {return !todo.completed})
+          }
+>>>>>>> 999ce9b481547788081b7a06af416f82b9bab245
         },
-      });
+        computed: {
+          getTodoList() {
+              let result = []
+              // 전체
+              result = this.todo_list
+              return result
+          }   
+
+        },
+  })
     </script>
   </body>
 </html>
