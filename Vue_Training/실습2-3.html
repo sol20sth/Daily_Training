@@ -12,7 +12,9 @@
       <input type="text" @input="onInputChange" />
       <button @click="addList">+</button>
       <h3>{{ message }}</h3>
-      <ul></ul>
+      <ul>
+        <li v-for=""></li>
+      </ul>
       <button>완료 목록 삭제</button>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
@@ -26,15 +28,7 @@
           onInputChange: function (event) {
             this.message = event.target.value;
           },
-          addList: function () {
-            const ul = document.querySelector("ul");
-            const li1 = document.createElement("li");
-            const checkBox = document.createElement("input");
-            checkBox.setAttribute("type", checkbox);
-            li1.innerText = this.message;
-            ul.appendChild(li1);
-            li1.appendChild(checkBox);
-          },
+          
         },
       });
     </script>
