@@ -43,24 +43,43 @@ export default new Vuex.Store({
 				selected: false,
 			},
 		],
+		selectedMenu: {},
+		selectedSize: {},
 	},
-	getters: {},
+	getters: {
+		totalOrderCount(state) {
+			return state.orderList.length;
+		},
+		totalOrderPrice(state) {
+			return state.orderList.reduce((sum, order) => {
+				sum += order.menu.price + order.size.price;
+				return sum;
+			}, 0);
+		},
+	},
 	mutations: {
-		addOrder: function () {},
-		updateMenuList: function (state, selectedMenu) {
+		addOrder(state) {
+			state.orderList.push({
+				menu: state.selectedMenu,
+				size: state.selectedSize,
+			});
+		},
+		updateMenuList(state, selectedMenu) {
 			state.menuList = state.menuList.map((menu) => {
 				if (menu.title === selectedMenu.title) {
 					menu.selected = true;
+					state.selectedMenu = selectedMenu;
 				} else {
 					menu.selected = false;
 				}
 				return menu;
 			});
 		},
-		updateSizeList: function (state, selectedSize) {
+		updateSizeList(state, selectedSize) {
 			state.sizeList = state.sizeList.map((size) => {
 				if (size.name === selectedSize.name) {
 					size.selected = true;
+					state.selectedSize = selectedSize;
 				} else {
 					size.selected = false;
 				}
@@ -74,6 +93,9 @@ export default new Vuex.Store({
 		},
 		selectSize(context, selectedSize) {
 			context.commit("updateSizeList", selectedSize);
+		},
+		addOrder(context) {
+			context.commit("addOrder");
 		},
 	},
 	modules: {},

@@ -7,18 +7,21 @@
       <menu-list></menu-list>
       <size-list></size-list>
     </div>
+    <OrderList></OrderList>
   </div>
 </template>
 
 <script>
 import MenuList from "@/components/MenuList.vue";
 import SizeList from "@/components/SizeList.vue";
+import OrderList from "@/components/OrderList.vue";
 
 export default {
   name: "App",
   components: {
     MenuList,
     SizeList,
+    OrderList,
   },
 };
 </script>
