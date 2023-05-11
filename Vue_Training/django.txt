@@ -1,0 +1,550 @@
+가상 환경 생성 및 활성화
+
+python -m venv .venv   : .venv==가상환경이름  
+source .venv/Scripts/activate 
+source .venv/bin/activate 맥북 가상환경 적용
+
+    가상 환경이 잘 활성화가 되었다면 밑에 (.venv)가 계속 뜨게 된다.
+
+pip install -r requirements.txt  >> -r(읽기)
+Requirement 를 이용해 관련 프로그램 설치
+
+( 보통 django == 3.2.18 버전)
+
+pip install ipython
+pip install django-extensions
+( ipython, django-extensions 도 들어가 있을 때도 있다.)
+
+현재 폴더를 기준으로 프로젝트 생성
+django-admin startproject project1 .
+(뒤에 . 을 붙여 작업 영역을 바꾸지 않아도 바로 python 파일 실행 가능)
+
+
+
+어플리케이션 생성
+python manage.py startapp chatting
+(생성했으면 바로 settiong.py-installed_apps 에 
+  앱 이름과 django_extensions 추가하기)
+
+상속 base.html 만들어기
+Setting.py 에서 템플릿 속성 안 'DIRS': [ BASE_DIR / 'templates' ], 설정
+현재 작업 영역 기준으로 새로운 폴더 templates 만들고 그 안에 base.html 만들어주기
+부트스트랩과 Block 영역도 설정해주기
+Load static 설정  : 이유는? 이미지 파일 추가를 위해? 정적 파일 관련 기능 제공
+Setting.py 에 
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [ BASE_DIR / 'static',]
+
+추가 static 폴더 만들고 그곳에 정적 파일(장고내에서 사용할 파일들) 추가
+
+Url mapping : include 이용
+프로젝트 url 패턴에 
+path('chatting(앱 이름)/', include('chatting.urls')) 추가
+어플리케이션에 urls.py 파일 생성
+
+from django.urls import path, include
+from . import views
+추가
+
+App_name = 'app_name' 설정
+앱 네임을 설정해주어야 다른 앱에서도 그 앱의 url 태그를 사용할 수 있다.
+
+Urlpatterns = [] 만들어 주기, url 만들때마다 url 이름도 설정
+
+각 url 요청에 따른 함수와 그 url이름 지정해주기
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('create/', views.create, name='create'),
+    path('<int:pk>/', views.detail, name='detail'),
+    path('<int:pk>/update/', views.update, name='update'),
+    path('<int:pk>/delete/', views.delete, name='delete')
+]
+
+Pk 입력 받을 때 타입을 int로 받아야 한다
+Int:pk 다음 /update 와 /delete 꼭 붙인다
+
+
+모델 설정
+
+from django.db import models
+# Create your models here.
+class Movie(models.Model):
+    title = models.CharField(max_length=20)
+    audience = models.IntegerField()
+    release_date = models.DateField()
+    genre = models.CharField(max_length=30)
+    score = models.FloatField()
+    poster_url = models.CharField(max_length=50)
+    description = models.TextField()
+    actor_image = models.ImageField()
+설정 했으면
+Python manage.py makemigrations 와
+Python manage.py migrate 시전
+
+View.py 에
+
+from .models import Movie
+모델 파일에서 만든 모델 이름 import 해주기
+
+전체 목록 가져오는 함수 index
+def index(request):
+    movies = Movie.objects.all()
+    context = { 'movies' : movies }
+    return render(request, 'movies/index.html', context)
+Context를 써주어야 html파일로 context 속 내용이 넘어간다.
+
+앱 폴더 안에 새로 templates 폴더 만들고 다시 그 안에 앱이름과 같은 폴더를 만들고
+각각의 html 파일들을 만든다.
+
+Index html
+
+{% extends 'base.html' %} : 상속받기
+{% block content %} : block 안쪽 내용은 상속받지 않고 따로 추가할 내용
+<h1>INDEX</h1>
+<a href="{% url 'movies:create' %}">create</a> : 새로 추가할 버튼
+
+<hr>
+{% for movie in movies %} : for문 이용해서 넘겨받은 context 속 movies에 대해 반복
+For나 if 문 안에는 전달받은 변수에 {{}} 씌우지 않는다.
+<a href="{% url 'movies:detail' movie.pk%}">{{movie.title}}</a>
+<br>
+{{movie.score}} : movies 속 한 movie에 대해 모델값 score
+
+{% endfor %}
+{% endblock content %}
+
+
+한 목록의 세부 항복 보여주는 함수 detail
+
+def detail(request, pk):
+    
+    movie = Movie.objects.get(pk=pk) : 넘겨 받은 pk와 같은 pk의 무비를 가져오기
+    context = { 'movie' : movie }
+    return render(request, 'movies/detail.html', context)
+
+Detail html
+
+
+{% extends 'base.html' %}
+{% block content %}
+<h1>DETAIL</h1>
+<hr>
+<strong>{{movie.title}}</strong>
+<br>
+<p>Audience : {{movie.audience}}</p>
+<p>Release Dates : {{movie.release_date}}</p>
+<p>Genre : {{movie.genre}}</p>
+<p>Score : {{movie.score}}</p>
+<p>Poster URL : {{movie.poster_url}}</p>
+<p>Actor :</p>
+<img src="{{movie.actor_image}}" alt=""> : 이미지 넣어주려면?
+<br>
+<p>{{movie.description}}</p>
+<a href="{% url 'movies:update' movie.pk%}">UPDATE</a>
+<form action="{% url 'movies:delete' movie.pk%}" method="POST"> : delete 는 추가 화면 없이 바로 데이터베이스에 영향을 미치기 때문에 form으로 받고 POST 사용
+    {% csrf_token %} : POST 사용하면 토큰 써줘야함
+    <input type="submit" value="DELETE">
+</form>
+<a href="{% url 'movies:index' %}">BACK</a>
+    
+
+{% endblock content %}
+
+폼 만들어주기
+
+
+from .models import Movie : 모델 파일에서 만든 모델명 가져오기
+from django import forms
+class MovieForm(forms.ModelForm):
+    class Meta:
+        model = Movie
+        fields = '__all__' : 모든 필드 내용 가져오기
+
+새로 항목을 만들어주는 함수 create
+
+
+def create(request):
+    if request.method == 'POST':  : create.html 에서 정보를 받아 넘어올 때
+        form = MovieForm(request.POST, request.FILES)  :request.FILES는 이름이 정해진 걸까? >> 파일과 이미지는 POST에 담기지 않아서 FILES로 넘겨줘야한다.
+        if form.is_valid():
+            movie = form.save() :폼을 저장하고 그 값으로 다음에 뭔가 (생성된 값의 pk를 넘겨주는 등)를 하고 싶을 때 변수로 받으면 될 듯
+            return redirect('movies:index')
+        
+    else:
+        form = MovieForm()     :create 버튼을 눌렀을 때 만들어 놓은 폼을 토대로
+        context = { 'form' : form}     :create.html로 가서 폼에 입력을 받고
+        return render(request, 'movies/create.html', context)    :다시 create로 넘겨준다.
+
+
+Create html
+
+
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>CREATE</h1>
+<form action="{% url 'movies:create' %}" method="POST" >
+{% csrf_token %}
+<hr>
+{{form.as_p}}
+<input type="submit">
+</form>
+<a href="{% url 'movies:index' %}">BACK</a>
+{% endblock content %}
+
+** block 까먹지 말고 꼭 넣자
+
+항목 지워주는 delete 함수
+
+
+def delete(request, pk):
+    movie = Movie.objects.get(pk=pk)
+    movie.delete()
+    return redirect("movies:index")
+
+
+항목 바꿔주는 update 함수
+
+
+
+def update(request, pk):
+    if request.method == 'POST':
+        movie = Movie.objects.get(pk=pk)
+        form = MovieForm(request.POST, request.FILES, instance=movie) : instance를 설정하면 폼을 열 때 값을 설정 가능
+        if form.is_valid():
+            form.save()
+            return redirect('movies:detail', pk=movie.pk)
+    else:
+        movie = Movie.objects.get(pk=pk)
+        form = MovieForm(instance=movie)
+        context = { 'form' : form, 'movie' : movie} : movie 값 까지 가줘야 pk도 따라 갈 수 있다.
+        return render(request, 'movies/update.html', context)
+
+
+Update html
+
+
+{% extends 'base.html' %}
+{% block content %}
+<form action="{% url 'movies:update' movie.pk %} " method="POST">
+    {% csrf_token %}
+    {{form.as_p}}
+    <input type="reset" value="reset">
+    <input type="submit" value="submit">
+
+</form>
+<a href="{% url 'movies:index' %}">BACK</a>
+
+{% endblock content %}
+
+
+
+
+만든 모델 클래스를 admin 사이트에 등록하려면
+Admin.py 에
+
+from django.contrib import admin
+from .models import Movie
+# Register your models here.
+admin.site.register(Movie)
+
+입력
+
+폼 속성 추가
+
+
+genre = forms.CharField(widget = forms.Select(choices=[('comedy','comedy'),('thriller','thriller'),('romance','romance')]))  : 장르는 코미디, 스릴러, 로맨스 선택박스 중에만 선택 가능
+    release_date = forms.DateTimeField(widget=forms.NumberInput(attrs={'type': 'date'}),)
+: 개봉날짜는 날짜 형식으로 입력
+    score = forms.FloatField(widget=forms.NumberInput(attrs={'step':0.5, 'max':5, 'min':0})) : 점수는 0.5씩 증감하며 최소 0 최대 5를 가짐
+
+
+미디어 파일을 넣기 위한 준비
+
+Settings.py  에
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+추가
+
+현재 영역에 media 폴더 따로 생성 : 사진 입력 받으면 이곳에 자동적으로 추가됨
+
+프로젝트 urls.py에
+
+
+from django.conf import settings
+from django.conf.urls.static import static
+추가하고
+
+Urlpatterns에    
+
++ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+더해주기
+
+모델에 이미지 필드 추가
+
+actor_image = models.ImageField(blank=True)
+Blank=True : 비워둘 수 있음
+
+Pip install pillow   설치
+
+Python manage.py makemigrations
+Python manage.py migrate 시전
+
+Create.html post 옆에 
+enctype="multipart/form-data" 추가해주기
+
+
+Detail.html 
+
+{% if movie.actor_image %} : 이미지 필드에 값이 저장된 것에만 한해서
+<img src="{{movie.actor_image.url}}" alt=""> : 이미지 표현
+{% endif %}
+
+
+Update.html post 옆에도
+
+enctype="multipart/form-data"
+추가
+
+
+
+유저 시스템 설정을 위한 준비
+
+Python manage.py startapp accounts : 유저 권한을 위해 전용 앱 생성
+Settings.py 에 installed_apps 에 기록
+
+프로젝트 urls.py 에
+
+path('accounts/', include('accounts.urls'))
+추가
+
+Accounts에 새로운 urls.py 만들고
+
+from django.urls import path
+from . import views
+app_name = 'account'
+urlpatterns = [
+    
+]
+입력
+
+커스텀 유저 모델 만들기
+
+Accounts models.py 에
+
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+# Create your models here.
+class User(AbstractUser):
+    pass
+입력
+
+프로젝트 settings.py 에
+
+AUTH_USER_MODEL = 'accounts.User'
+ 설정
+
+Accounts admin.py에
+
+from django.contrib import admin
+from django.contib.auth.admin import UserAdmin 
+from .models import User
+# Register your models here.
+admin.site.register(User, UserAdmin)
+입력
+
+데이터베이스를 초기화 하기 위해
+Migrations에 앞에 번호가 붙은 파일 삭제
+(init 파일은 삭제 x )
+
+Db.sqlite3 삭제
+
+다시 python manage.py makemigrations/ migrate 진행
+
+로그인 기능 
+
+Urls.py - urlpatterns에 
+
+path('login/', views.login, name='login'),
+추가
+
+Views에 
+
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import login as auth_login
+추가
+
+Login 해주는 함수
+
+def login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, request.POST)
+        if form.is_valid():
+            auth_login(request, form.get_user())
+            
+            return redirect('movies:index')
+            
+        
+    else:
+        form = AuthenticationForm()
+    context = { 'form': form }
+    return render(request, 'accounts/login.html', context)
+
+Login html
+
+
+{% extends 'base.html' %}
+{% block content %}
+<h1>Login</h1>
+<form action="{% url 'accounts:login' %}" method="POST">
+    {% csrf_token %}
+    {{form.as_p}}
+    <input type="submit" value="login">
+
+</form>
+
+{% endblock content %}
+
+
+로그아웃 기능
+
+Views에 
+
+from django.contrib.auth import logout as auth_logout
+
+추가
+
+Logout 해주는 함수
+
+
+def logout(request):
+    auth_logout(request)
+    return redirect('movies:index')
+
+Base.html 에 로그인과 로그아웃 추가해주기
+
+
+<a href="{% url 'accounts:login' %}">Login</a>
+    <form action="{% url 'accounts:logout' %}" method="POST">
+        {% csrf_token %}
+        <input type="submit" value="Logout">
+    </form>
+로그아웃은 바로 세션에 변화를 주어 POST로 넘겨주어야한다.
+
+
+UserCreationForm 커스텀 하기
+
+Forms.py 만들고 
+
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+class CustomUserCreationForm(UserCreationForm):
+    class Meta(UserCreationForm.Meta):
+        model = get_user_model()
+밑에 change는 회원정보 수정을 위해 미리 만들어놓음
+class CustomUserChangeForm(UserChangeForm):
+    class Meta(UserChangeForm.Meta):
+        model = get_user_model()
+        fields = ('username', 'email', 'first_name', 'last_name',)
+입력
+
+
+
+
+
+회원가입 기능 만들기
+
+Urls.py 에 경로 추가
+
+
+path('signup/', views.signup, name='signup'),
+
+
+Views에 import 추가
+
+from django.contrib.auth.forms import UserCreationForm
+커스텀
+from .forms import CustomUserChangeForm, CustomUserCreationForm
+
+
+회원가입 함수
+def signup(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()   : 유저에 방금 추가한 내용 저장
+            auth_login(request, form.get_user()) : 방금 추가한 user로 로그인
+            return redirect('movies:index')
+    else:
+        form = CustomUserCreationForm()
+    context = { 'form': form}
+    return render(request, 'accounts/signup.html', context)
+
+회원탈퇴 기능 만들기
+
+경로 추가
+
+path('delete/', views.delete, name='delete'),
+
+회원탈퇴 함수
+
+def delete(request):
+    request.user.delete()
+    auth_logout(request) : 회원탈퇴하면서 현재 세션도 지워지면서 로그아웃
+    return redirect('movies:index')
+
+Base.html 에 회원가입과 회원탈퇴 만들기
+
+
+<a href="{% url 'accounts:signup' %}">회원가입</a>
+    <form action="{% url 'accounts:delete' %}" method="POST">
+        {% csrf_token %}
+        <input type="submit" value="회원탈퇴">
+    </form>
+
+회원탈퇴 또한 바로 db에 영향을 주기 때문에 POST 사용
+
+회원정보 수정하기 기능
+
+경로 추가
+
+path('update/', views.update, name='update'),
+
+
+업데이트 함수 정의
+
+
+def update(request):
+    if request.method == 'POST':
+        form = CustomUserChangeForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('movies:index')
+    else:
+        form = CustomUserChangeForm(instance=request.user)
+    context = { 'form': form}
+    return render(request, 'accounts/update.html', context)
+
+
+Update html
+
+{% extends 'base.html' %}
+{% block content %}
+<h1>회원정보 수정</h1>
+<form action="{% url 'accounts:update' %}" method="POST">
+    {% csrf_token %}
+    {{form.as_p}}
+    <input type="submit">
+</form>
+
+
+
+
+{% endblock content %}
+
+
